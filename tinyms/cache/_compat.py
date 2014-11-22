@@ -1,11 +1,6 @@
 import sys
 import operator
 import functools
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
-
 
 PY2 = sys.version_info[0] == 2
 

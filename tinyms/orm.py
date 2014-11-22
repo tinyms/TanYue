@@ -1,6 +1,6 @@
-__author__ = 'i@tinyms.com'
+# -*- coding: utf-8 -*-
 
-import json
+__author__ = 'i@tinyms.com'
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship, backref, class_mapper
@@ -13,12 +13,120 @@ from tinyms.util import Utils, DataResult
 from tinyms.plugin import EmptyClass
 
 
+@declared_attr
+def __tablename__(*args):
+    self = args[0]
+    table_name = self.__name__.lower()
+    return "%s%s" % (SessionFactory.__table_name_prefix__, table_name)
+
+
+def __table_data_dict(*args):
+    self = args[0]
+    dict_ = args[1]
+    """
+    1, object to map
+    2, map to object
+    :param dict_:
+    :return:
+    """
+    if not dict_:
+        columns = [c.key for c in class_mapper(self.__class__).columns]
+        return dict((c, getattr(self, c)) for c in columns)
+    else:
+        metas = self.cols_meta()
+        for k, v in dict_.items():
+            if not hasattr(self, k):
+                continue
+            for m in metas:
+                if m["name"] == k:
+                    if m["type"] == "int":
+                        if type(v) == str:
+                            setattr(self, k, Utils.parse_int(v))
+                        else:
+                            setattr(self, k, v)
+                    elif m["type"] == "numeric":
+                        if type(v) == str:
+                            setattr(self, k, Utils.parse_float(v))
+                        else:
+                            setattr(self, k, v)
+                    elif m["type"] == "datetime":
+                        if type(v) == str:
+                            setattr(self, k, Utils.parse_datetime(v))
+                        else:
+                            setattr(self, k, v)
+                    elif m["type"] == "date":
+                        if type(v) == str:
+                            setattr(self, k, Utils.parse_date(v))
+                        else:
+                            setattr(self, k, v)
+                    elif m["type"] == "time":
+                        if type(v) == str:
+                            setattr(self, k, Utils.parse_time(v))
+                        else:
+                            setattr(self, k, v)
+                    else:
+                        setattr(self, k, v)
+            pass
+        pass
+
+
+def __table_datarow_print__(*args):
+    self = args[0]
+    return "<%s%s>" % (self.__tablename__.capitalize(), self.data_dict())
+
+
+def __table_fields_meta__(*args):
+    self = args[0]
+    cols = class_mapper(self.__class__).columns
+    metas = list()
+    for col in cols:
+        meta = dict()
+        meta["pk"] = col.primary_key
+        # is a set()
+        meta["fk"] = col.foreign_keys
+        meta["name"] = col.key
+        meta["nullable"] = col.nullable
+        meta["unique"] = col.unique
+        meta["autoincrement"] = col.autoincrement
+        meta["default"] = col.default
+        if isinstance(col.type, String) and col.type.length:
+            meta["length"] = col.type.length
+        else:
+            meta["length"] = 0
+        type_name = col.type.__visit_name__
+        if ["string", "text", "unicode", "unicode_text"].count(type_name) == 1:
+            type_name = "string"
+        elif ["integer", "small_integer", "big_integer", "boolean"].count(type_name) == 1:
+            type_name = "int"
+        elif ["numeric", "float"].count(type_name) == 1:
+            type_name = "numeric"
+            # elif ["datetime","date","time"].count(type_name)==1:
+        #     type_name = "date"
+        meta["type"] = type_name
+        metas.append(meta)
+    return metas
+
 Entity = declarative_base()
+Entity.__tablename__ = __tablename__
+Entity.id = Column(String(60), primary_key=True)
+Entity.create_time_ = Column(DateTime())
+Entity.modify_time_ = Column(DateTime())
+Entity.creator_ = Column(String(60))
+Entity.updator_ = Column(String(60))
+Entity.cols_meta = __table_fields_meta__
+Entity.data_dict = __table_data_dict
+Entity.data_show = __table_datarow_print__
 
 
 class SessionFactory():
     __engine__ = None
-    __table_name_prefix__ = "archx_"
+
+    def __init__(self):
+            pass
+
+    @declared_attr
+    def __table_name_prefix__(self):
+        return "landmoon_"
 
     @staticmethod
     def set_table_name_prefix(name):
@@ -92,117 +200,6 @@ class SessionFactory():
         return ec
 
 
-def entity_manager():
-    def ref_pattern(cls):
-        if not SessionFactory.entitys.get(cls):
-            key = "%s.%s" % (cls.__module__, cls.__name__)
-            SessionFactory.entitys[cls.__tablename__] = key
-        return cls
-
-    return ref_pattern
-
-
-class Simplify():
-    """
-    简化实体创建及可以JSON化实体数据
-    """
-
-    id = Column(String(60), primary_key=True)
-
-    #security fields
-    create_time_ = Column(DateTime())
-    modify_time_ = Column(DateTime())
-    creator_ = Column(String(60))
-    updator_ = Column(String(60))
-
-    @declared_attr
-    def __tablename__(self):
-        return "%s%s" % (SessionFactory.__table_name_prefix__, self.__name__.lower())
-
-    def dict(self, dict_=None):
-        """
-        1, object to map
-        2, map to object
-        :param dict_:
-        :return:
-        """
-        if not dict_:
-            columns = [c.key for c in class_mapper(self.__class__).columns]
-            return dict((c, getattr(self, c)) for c in columns)
-        else:
-            metas = self.cols_meta()
-            for k, v in dict_.items():
-                if not hasattr(self, k):
-                    continue
-                for m in metas:
-                    if m["name"] == k:
-                        if m["type"] == "int":
-                            if type(v) == str:
-                                setattr(self, k, Utils.parse_int(v))
-                            else:
-                                setattr(self, k, v)
-                        elif m["type"] == "numeric":
-                            if type(v) == str:
-                                setattr(self, k, Utils.parse_float(v))
-                            else:
-                                setattr(self, k, v)
-                        elif m["type"] == "datetime":
-                            if type(v) == str:
-                                setattr(self, k, Utils.parse_datetime(v))
-                            else:
-                                setattr(self, k, v)
-                        elif m["type"] == "date":
-                            if type(v) == str:
-                                setattr(self, k, Utils.parse_date(v))
-                            else:
-                                setattr(self, k, v)
-                        elif m["type"] == "time":
-                            if type(v) == str:
-                                setattr(self, k, Utils.parse_time(v))
-                            else:
-                                setattr(self, k, v)
-                        else:
-                            setattr(self, k, v)
-                pass
-            pass
-
-    def cols_meta(self):
-        cols = class_mapper(self.__class__).columns
-        metas = list()
-        for col in cols:
-            meta = dict()
-            meta["pk"] = col.primary_key
-            # is a set()
-            meta["fk"] = col.foreign_keys
-            meta["name"] = col.key
-            meta["nullable"] = col.nullable
-            meta["unique"] = col.unique
-            meta["autoincrement"] = col.autoincrement
-            meta["default"] = col.default
-            if isinstance(col.type, String) and col.type.length:
-                meta["length"] = col.type.length
-            else:
-                meta["length"] = 0
-            type_name = col.type.__visit_name__
-            if ["string", "text", "unicode", "unicode_text"].count(type_name) == 1:
-                type_name = "string"
-            elif ["integer", "small_integer", "big_integer", "boolean"].count(type_name) == 1:
-                type_name = "int"
-            elif ["numeric", "float"].count(type_name) == 1:
-                type_name = "numeric"
-                # elif ["datetime","date","time"].count(type_name)==1:
-            #     type_name = "date"
-            meta["type"] = type_name
-            metas.append(meta)
-        return metas
-
-    def json(self):
-        return json.dumps(self.dict())
-
-    def __repr__(self):
-        return "<%s%s>" % (self.__tablename__.capitalize(), self.dict())
-
-
 def one_to_one(foreign_entity_name):
     """
     一对一，比如: 从表对主表
@@ -235,7 +232,7 @@ def many_to_one(foreign_entity_name, delete_cascard=True):
     def ref_table(cls):
         foreign_entity_name_lower = foreign_entity_name.lower()
         foreign_table_name = "%s%s" % (SessionFactory.__table_name_prefix__, foreign_entity_name_lower)
-        #自己关联自己
+        # 自己关联自己
         if foreign_entity_name == cls.__name__:
             foreign_entity_name_lower = "parent"
 
@@ -289,11 +286,9 @@ def many_to_many(foreign_entity_name):
     return ref_table
 
 
-#特别的数据库处理函数
-######################################################date diff######################################################
+# 特别的数据库处理函数
 
-
-#计算两个日期之间以分钟为单位的差值，返回整数
+# 计算两个日期之间以分钟为单位的差值，返回整数
 class MinuteDiff(FunctionElement):
     type = Integer()
     name = "minute_diff"

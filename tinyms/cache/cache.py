@@ -41,12 +41,12 @@
     from the cache module and instantiate it.  Then you can start working
     with that object:
 
-    >>> from werkzeug.contrib.cache import SimpleCache
-    >>> c = SimpleCache()
-    >>> c.set("foo", "value")
-    >>> c.get("foo")
-    'value'
-    >>> c.get("missing") is None
+    #>>> from werkzeug.contrib.cache import SimpleCache
+    #>>> c = SimpleCache()
+    #>>> c.set("foo", "value")
+    #>>> c.get("foo")
+    #'value'
+    #>>> c.get("missing") is None
     True
 
     Please keep in mind that you have to create the cache and put it somewhere
