@@ -5,8 +5,41 @@ __author__ = 'i@tinyms.com'
 import os
 from functools import wraps
 from tornado.web import RequestHandler
+import tornado.httpserver
+import tornado.ioloop
+import tornado.options
+import tornado.web
+import tornado.wsgi
+import wsgiref.simple_server
 from tinyms.plugin import ObjectPool, EmptyClass, do_action
 from tinyms.util import Utils, DataResult
+
+
+class HelloHandler(tornado.web.RequestHandler):
+    def data_received(self, chunk):
+        pass
+
+    def get(self):
+        self.write("OK, Land Moon.")
+
+
+class HttpServer():
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def startup():
+        workdir = os.getcwd()
+        app = tornado.web.Application(
+            debug=True,
+            handlers=[(r"/hello", HelloHandler)],
+            static_path=os.path.join(workdir, "static"),
+            template_path=os.path.join(workdir, "template"),
+            cookie_secret="www.tinyms.com"
+        )
+        wsgi_app = tornado.wsgi.WSGIAdapter(app)
+        server = wsgiref.simple_server.make_server('', 80, wsgi_app)
+        server.serve_forever()
 
 
 class IWebHandler(RequestHandler):
