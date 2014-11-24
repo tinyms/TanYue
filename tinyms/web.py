@@ -3,6 +3,7 @@
 __author__ = 'i@tinyms.com'
 
 import os
+from sys import path as sys_path
 from functools import wraps
 from tornado.web import RequestHandler
 import tornado.httpserver
@@ -30,6 +31,10 @@ class HttpServer():
     @staticmethod
     def startup():
         workdir = os.getcwd()
+        Utils.rmdirs(os.path.join(workdir, "temp"))
+        Utils.mkdirs(os.path.join(workdir, "temp"))
+        Utils.mkdirs(os.path.join(workdir, "plugins"))
+        sys_path.append(os.path.join(workdir, "plugins"))
         app = tornado.web.Application(
             debug=True,
             handlers=[(r"/hello", HelloHandler)],

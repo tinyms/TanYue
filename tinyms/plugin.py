@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 __author__ = 'i@tinyms.com'
+import sys
+import os
+from importlib import import_module
 
 
 class EmptyClass(object):
@@ -8,6 +11,9 @@ class EmptyClass(object):
 
 
 class ObjectPool():
+    def __init__(self):
+        pass
+
     hooks = dict()
     # Api
     api = dict()
@@ -46,3 +52,41 @@ def do_action(hook_name, *args, **kwargs):
             if r:
                 results[r[0]] = r[1]
     return results
+
+
+def list_plugin_modules(plugin_folder):
+    """
+    列出插件目录下所有模块，包含包结构的字符串形式
+    :param plugin_folder: 插件目录
+    :return: ['pkg1.pkg2.module',...]
+    """
+    sys.path.append(plugin_folder)
+    valid_file_extnames = ['.py', '.pyc']
+    length = len(plugin_folder.split(os.path.sep))
+    modules_str_arr = list()
+    dir_tree = os.walk(plugin_folder)
+    for root, dirs, files in dir_tree:
+        for f in files:
+            file_part = os.path.splitext(f)
+            if len(file_part) == 2:
+                ext_name = file_part[1]
+                if valid_file_extnames.count(ext_name) == 0:
+                    continue
+                pkg = '.'.join(root.split(os.path.sep)[length:])
+                module = "%s.%s" % (pkg, file_part[0])
+                if modules_str_arr.count(module) == 0:
+                    modules_str_arr.append(module)
+    return modules_str_arr
+
+
+def import_plugin_modules(modules_arr):
+    """
+    加载插件文件夹下的所有模块
+    :param modules_arr:
+    :return:
+    """
+    modules = list()
+    for item in modules_arr:
+        m = import_module(item)
+        modules.append(m)
+    return modules

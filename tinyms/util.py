@@ -268,6 +268,13 @@ class Utils():
         from datetime import datetime as tmp
 
         return tmp.now()
+    @staticmethod
+    def copydirs(path):
+        shutil.copytree(path, ignore=True)
+
+    @staticmethod
+    def rmdirs(path):
+        shutil.rmtree(path, True)
 
     @staticmethod
     def mkdirs(path):
