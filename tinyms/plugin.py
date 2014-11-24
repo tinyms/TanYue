@@ -90,3 +90,23 @@ def import_plugin_modules(modules_arr):
         m = import_module(item)
         modules.append(m)
     return modules
+
+
+def preprocess_func_wrapper(modules):
+    """
+    被包装函数不会真正执行,只是把被包装函数做些预处理,放入全局对象池中,供其它模块真正调用
+    :param modules:
+    """
+    for m in modules:
+        attrs = dir(m)
+        for attr_name in attrs:
+            if attr_name.startswith("__"):
+                continue
+            live_attr = getattr(m, attr_name)
+            if callable(live_attr):
+                code = live_attr.func_code
+                if code.co_name == "wrapper":
+                    arr = code.co_names
+                    if arr.count('__controller__') == 0:
+                        continue
+                    apply(live_attr)

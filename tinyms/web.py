@@ -179,6 +179,7 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cach
     def handle_func(func):
         @wraps(func)
         def wrap_func(*args_, **kwargs_):
+            func.__controller__ = True
             pattern_ = "/api%s" % pattern
             cls_name = "tinyms_web_api_%s" % Utils.md5(pattern_)
             handler = type(cls_name, (IWebHandler,), {})
@@ -232,6 +233,7 @@ def route(pattern="/", method="get", auth=False, points=set(), cache_path="", ca
     def handle_func(func):
         @wraps(func)
         def wrap_func(*args_, **kwargs_):
+            func.__controller__ = True
             cls_name = "tinyms_web_controller_%s" % Utils.md5(pattern)
             handler = type(cls_name, (IWebHandler,), {})
             handler.cache_path = cache_path
