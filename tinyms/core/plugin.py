@@ -103,9 +103,10 @@ def preprocess_func_wrapper(modules):
             if attr_name.startswith("__"):
                 continue
             live_attr = getattr(m, attr_name)
+
             if callable(live_attr):
                 code = live_attr.func_code
-                if code.co_name == "wrapper":
+                if code.co_name == "wrapper" or code.co_name == "wrap_func":
                     arr = code.co_names
                     if arr.count('__controller__') == 0:
                         continue

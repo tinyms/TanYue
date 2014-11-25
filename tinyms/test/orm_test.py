@@ -1,8 +1,9 @@
 __author__ = 'i@tinyms.com'
 from sqlalchemy import create_engine
 from sqlalchemy.pool import QueuePool
-from sqlalchemy import Column, Boolean, String, Date, Integer, Float, Text
-from tinyms.orm import SessionFactory, Entity, many_to_one
+from sqlalchemy import Column, Integer, Text
+
+from tinyms.core.orm import SessionFactory, Entity, many_to_one
 
 
 class DemoTable(Entity):

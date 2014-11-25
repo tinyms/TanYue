@@ -9,7 +9,7 @@ from sqlalchemy.sql.expression import FunctionElement
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import sessionmaker
 
-from tinyms.util import Utils, DataResult
+from tinyms.core.util import Utils, DataResult
 from tinyms.plugin import EmptyClass
 
 

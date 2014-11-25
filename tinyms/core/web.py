@@ -3,48 +3,10 @@
 __author__ = 'i@tinyms.com'
 
 import os
-from sys import path as sys_path
 from functools import wraps
 from tornado.web import RequestHandler
-import tornado.httpserver
-import tornado.ioloop
-import tornado.options
-import tornado.web
-import tornado.wsgi
-import wsgiref.simple_server
-from tinyms.plugin import ObjectPool, EmptyClass, do_action
-from tinyms.util import Utils, DataResult
-
-
-class HelloHandler(tornado.web.RequestHandler):
-    def data_received(self, chunk):
-        pass
-
-    def get(self):
-        self.write("OK, Land Moon.")
-
-
-class HttpServer():
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def startup():
-        workdir = os.getcwd()
-        Utils.rmdirs(os.path.join(workdir, "temp"))
-        Utils.mkdirs(os.path.join(workdir, "temp"))
-        Utils.mkdirs(os.path.join(workdir, "plugins"))
-        sys_path.append(os.path.join(workdir, "plugins"))
-        app = tornado.web.Application(
-            debug=True,
-            handlers=[(r"/hello", HelloHandler)],
-            static_path=os.path.join(workdir, "static"),
-            template_path=os.path.join(workdir, "template"),
-            cookie_secret="www.tinyms.com"
-        )
-        wsgi_app = tornado.wsgi.WSGIAdapter(app)
-        server = wsgiref.simple_server.make_server('', 80, wsgi_app)
-        server.serve_forever()
+from .plugin import ObjectPool, EmptyClass, do_action
+from tinyms.core.util import Utils, DataResult
 
 
 class IWebHandler(RequestHandler):
@@ -197,6 +159,7 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cach
 
             def generic_func(*args, **kwargs):
                 this = args[0]
+                this.set_header("Content-Type", "text/json;charset=utf-8")
                 if auth:
                     account_id = this.get_current_user()
                     if not account_id:
@@ -214,6 +177,7 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cach
                         this.write(Utils.encode(result.dict()))
                 else:
                     result = func(*args, **kwargs)
+                    print(this)
                     this.write(Utils.encode(result.dict()))
 
             if "post" == method:
@@ -222,7 +186,7 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cach
                 handler.get = generic_func
 
             if pattern not in ObjectPool.route.keys():
-                ObjectPool.route[pattern_] = (pattern_, handler)
+                ObjectPool.api[pattern_] = (pattern_, handler)
 
         return wrap_func
 
