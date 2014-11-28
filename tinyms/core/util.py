@@ -17,7 +17,6 @@ from datetime import timedelta
 import xlrd
 from PIL import Image
 from tornado.template import Template
-from jinja2 import Template as jj
 from dateutil.relativedelta import relativedelta
 
 
@@ -92,83 +91,6 @@ class Utils():
         img.save(saved_path, "JPEG")
 
     @staticmethod
-    def file_upload(handler, thumbnail_size="", store_level="Private", callback_func=None):
-        results = list()
-        #预先创建要存放的目录
-        """
-        文件上传
-        :param request: tornado request handler
-        :param thumbnail_size: 缩略图尺寸，格式200x200，即宽x高
-        :param store_level: 存放文档级别 `Public` or `Private`
-        :param callback_func: pass file inf, dict type
-        """
-        store_path = "static/upload/%s"
-        if store_level == "Private":
-            store_path = "upload/%s"
-        store_path = store_path % Utils.format_year_month(Utils.current_datetime(), "/")
-        Utils.mkdirs(store_path)
-
-        if handler.request.files:
-            for fn in handler.request.files.keys():
-                f = handler.request.files[fn][0]
-                raw_name = f["filename"]
-                ext_name = os.path.splitext(raw_name)[-1]
-                mime_type = f["content_type"]
-                uniq_name = Utils.uniq_index()
-                dist_name = "%s%s" % (uniq_name, ext_name)
-                tnb_name = "thumb_%s%s" % (uniq_name, ext_name)
-                tf = open("temp/%s" % Utils.uniq_index(), mode="w+b")
-                #tf = tempfile.NamedTemporaryFile()
-                try:
-                    tf.write(f["body"])
-                    tf.seek(0)
-                    tf.close()
-                    b = True
-                except Exception as e:
-                    b = False
-                    print(e)
-                if b:
-                    #拷贝到目标目录
-                    file_inf = dict()
-                    file_inf["author"] = handler.get_current_user()
-                    file_inf["raw_name"] = raw_name
-                    file_inf["ext_name"] = ext_name
-                    file_inf["mime_type"] = mime_type
-                    file_inf["size"] = Utils.get_file_size(tf.name)
-                    file_inf["rel_store_path"] = ""
-                    file_inf["rel_store_thumbnail_path"] = ""
-                    file_inf["store_level"] = store_level
-                    final_normal_save_path = "%s/%s/%s" % (os.getcwd(), store_path, dist_name)
-                    final_thumbnail_save_path = "%s/%s/%s" % (os.getcwd(), store_path, tnb_name)
-                    shutil.move(tf.name, final_normal_save_path)
-                    rel_thumbnail_store_path = "%s/%s" % (store_path, tnb_name)
-                    if thumbnail_size and mime_type.startswith("image/"):
-                        Utils.create_thumbnail(final_normal_save_path, final_thumbnail_save_path, size=thumbnail_size)
-                        file_inf["rel_store_thumbnail_path"] = rel_thumbnail_store_path
-                    rel_store_path = "%s/%s" % (store_path, dist_name)
-                    file_inf["rel_store_path"] = rel_store_path
-                    file_inf["__extra_data__"] = callback_func(file_inf, handler)
-                    r = DataResult()
-                    r.success = True
-                    r.message = "上传成功"
-                    r.data = file_inf
-                    results.append(r.dict())
-                else:
-                    r = DataResult()
-                    r.success = False
-                    r.message = "上传失败"
-                    r.data = raw_name
-                    results.append(r.dict())
-        else:
-            r = DataResult()
-            r.success = False
-            r.message = "没有上传的文件"
-            r.data = ""
-            results.append(r.dict())
-
-        return results
-
-    @staticmethod
     def read_excel(excel_file_path, by_name='Sheet1'):
 
         data = None
@@ -218,7 +140,7 @@ class Utils():
     # @staticmethod
     # def url_with_params(url):
     # r1 = urllib.parse.urlsplit(url)
-    #     if r1.query != "":
+    # if r1.query != "":
     #         return True
     #     return False
 
@@ -242,17 +164,6 @@ class Utils():
         return tpl.generate(**kwargs).decode("utf-8")
 
     @staticmethod
-    def render_by_jinja(tpl_text, *args, **kwargs):
-        """
-        render a template
-        :param tpl_text: template text
-        :param context: dict object
-        :return: str
-        """
-        tpl = jj(tpl_text)
-        return tpl.render(*args, **kwargs)
-
-    @staticmethod
     def md5(s):
         h = hashlib.new('ripemd160')
         h.update(bytearray(s.encode("utf8")))
@@ -268,9 +179,10 @@ class Utils():
         from datetime import datetime as tmp
 
         return tmp.now()
+
     @staticmethod
-    def copydirs(path):
-        shutil.copytree(path, ignore=True)
+    def copydirs(path, dst):
+        shutil.copytree(path, dst)
 
     @staticmethod
     def rmdirs(path):
@@ -451,6 +363,7 @@ class Utils():
         if len(matchs) > 0:
             return matchs[0]
         return ""
+
     ########################################### Date Format ######################################################
 
     @staticmethod
@@ -463,7 +376,7 @@ class Utils():
         """
         if not date_obj:
             return ""
-        return date_obj.strftime('%Y'+split+'%m')
+        return date_obj.strftime('%Y' + split + '%m')
 
     @staticmethod
     def format_datetime(date_obj, split="-"):
@@ -475,7 +388,7 @@ class Utils():
         """
         if not date_obj:
             return ""
-        return date_obj.strftime('%Y'+split+'%m'+split+'%d %H:%M:%S')
+        return date_obj.strftime('%Y' + split + '%m' + split + '%d %H:%M:%S')
 
     @staticmethod
     def format_datetime_short(date_obj, split="-"):
@@ -487,7 +400,7 @@ class Utils():
         """
         if not date_obj:
             return ""
-        return date_obj.strftime('%Y'+split+'%m'+split+'%d %H:%M')
+        return date_obj.strftime('%Y' + split + '%m' + split + '%d %H:%M')
 
     @staticmethod
     def format_date(date_obj, split="-"):
@@ -500,7 +413,7 @@ class Utils():
         if not date_obj:
             return ""
         try:
-            return date_obj.strftime('%Y'+split+'%m'+split+'%d')
+            return date_obj.strftime('%Y' + split + '%m' + split + '%d')
         except Exception as ex:
             print(ex)
         return ""

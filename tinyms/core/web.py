@@ -3,6 +3,7 @@
 __author__ = 'i@tinyms.com'
 
 import os
+import shutil
 from functools import wraps
 from tornado.web import RequestHandler
 from .plugin import ObjectPool, EmptyClass, do_action
@@ -159,7 +160,7 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cach
 
             def generic_func(*args, **kwargs):
                 this = args[0]
-                this.set_header("Content-Type", "text/json;charset=utf-8")
+                # this.set_header("Content-Type", "application/json; charset=UTF-8")
                 if auth:
                     account_id = this.get_current_user()
                     if not account_id:
@@ -177,15 +178,14 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cach
                         this.write(Utils.encode(result.dict()))
                 else:
                     result = func(*args, **kwargs)
-                    print(this)
-                    this.write(Utils.encode(result.dict()))
+                    this.write(result.dict())
 
             if "post" == method:
                 handler.post = generic_func
             else:
                 handler.get = generic_func
 
-            if pattern not in ObjectPool.route.keys():
+            if pattern not in ObjectPool.api.keys():
                 ObjectPool.api[pattern_] = (pattern_, handler)
 
         return wrap_func
@@ -228,10 +228,6 @@ def route(pattern="/", method="get", auth=False, points=set(), cache_path="", ca
 
             if "post" == method:
                 handler.post = generic_func
-            elif "put" == method:
-                handler.put = generic_func
-            elif "delete" == method:
-                handler.delete = generic_func
             else:
                 handler.get = generic_func
 
@@ -241,3 +237,80 @@ def route(pattern="/", method="get", auth=False, points=set(), cache_path="", ca
         return wrap_func
 
     return handle_func
+
+
+def upload(handler, thumbnail_size="", store_level="Private", callback_func=None):
+    results = list()
+    # 预先创建要存放的目录
+    """
+    文件上传
+    :param request: tornado request handler
+    :param thumbnail_size: 缩略图尺寸，格式200x200，即宽x高
+    :param store_level: 存放文档级别 `Public` or `Private`
+    :param callback_func: pass file inf, dict type
+    """
+    store_path = "static/upload/%s"
+    if store_level == "Private":
+        store_path = "upload/%s"
+    store_path = store_path % Utils.format_year_month(Utils.current_datetime(), "/")
+    Utils.mkdirs(store_path)
+
+    if handler.request.files:
+        for fn in handler.request.files.keys():
+            f = handler.request.files[fn][0]
+            raw_name = f["filename"]
+            ext_name = os.path.splitext(raw_name)[-1]
+            mime_type = f["content_type"]
+            uniq_name = Utils.uniq_index()
+            dist_name = "%s%s" % (uniq_name, ext_name)
+            tnb_name = "thumb_%s%s" % (uniq_name, ext_name)
+            tf = open("temp/%s" % Utils.uniq_index(), mode="w+b")
+            # tf = tempfile.NamedTemporaryFile()
+            try:
+                tf.write(f["body"])
+                tf.seek(0)
+                tf.close()
+                b = True
+            except Exception as e:
+                b = False
+                print(e)
+            if b:
+                # 拷贝到目标目录
+                file_inf = dict()
+                file_inf["author"] = handler.get_current_user()
+                file_inf["raw_name"] = raw_name
+                file_inf["ext_name"] = ext_name
+                file_inf["mime_type"] = mime_type
+                file_inf["size"] = Utils.get_file_size(tf.name)
+                file_inf["rel_store_path"] = ""
+                file_inf["rel_store_thumbnail_path"] = ""
+                file_inf["store_level"] = store_level
+                final_normal_save_path = "%s/%s/%s" % (os.getcwd(), store_path, dist_name)
+                final_thumbnail_save_path = "%s/%s/%s" % (os.getcwd(), store_path, tnb_name)
+                shutil.move(tf.name, final_normal_save_path)
+                rel_thumbnail_store_path = "%s/%s" % (store_path, tnb_name)
+                if thumbnail_size and mime_type.startswith("image/"):
+                    Utils.create_thumbnail(final_normal_save_path, final_thumbnail_save_path, size=thumbnail_size)
+                    file_inf["rel_store_thumbnail_path"] = rel_thumbnail_store_path
+                rel_store_path = "%s/%s" % (store_path, dist_name)
+                file_inf["rel_store_path"] = rel_store_path
+                file_inf["__extra_data__"] = callback_func(file_inf, handler)
+                r = DataResult()
+                r.success = True
+                r.message = "Success"
+                r.data = file_inf
+                results.append(r.dict())
+            else:
+                r = DataResult()
+                r.success = False
+                r.message = "Failure"
+                r.data = raw_name
+                results.append(r.dict())
+    else:
+        r = DataResult()
+        r.success = False
+        r.message = "NoFilesUpload"
+        r.data = ""
+        results.append(r.dict())
+
+    return results

@@ -10,7 +10,7 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import sessionmaker
 
 from tinyms.core.util import Utils, DataResult
-from tinyms.plugin import EmptyClass
+from tinyms.core.plugin import EmptyClass
 
 
 @declared_attr
@@ -101,10 +101,11 @@ def __table_fields_meta__(*args):
         elif ["numeric", "float"].count(type_name) == 1:
             type_name = "numeric"
             # elif ["datetime","date","time"].count(type_name)==1:
-        #     type_name = "date"
+        # type_name = "date"
         meta["type"] = type_name
         metas.append(meta)
     return metas
+
 
 Entity = declarative_base()
 Entity.__tablename__ = __tablename__
@@ -122,7 +123,7 @@ class SessionFactory():
     __engine__ = None
 
     def __init__(self):
-            pass
+        pass
 
     @declared_attr
     def __table_name_prefix__(self):
@@ -172,7 +173,7 @@ class SessionFactory():
         ec = EmptyClass()
         ec.checked = False
         ec.message = None
-        #字段没有填写则不进行唯一性检查，否则必须检查
+        # 字段没有填写则不进行唯一性检查，否则必须检查
         if allowed_val_null and not val:
             ec.checked = True
             return ec

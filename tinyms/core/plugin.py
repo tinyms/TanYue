@@ -3,6 +3,7 @@
 __author__ = 'i@tinyms.com'
 import sys
 import os
+import types
 from importlib import import_module
 
 
@@ -104,7 +105,7 @@ def preprocess_func_wrapper(modules):
                 continue
             live_attr = getattr(m, attr_name)
 
-            if callable(live_attr):
+            if isinstance(live_attr, types.FunctionType):
                 code = live_attr.func_code
                 if code.co_name == "wrapper" or code.co_name == "wrap_func":
                     arr = code.co_names

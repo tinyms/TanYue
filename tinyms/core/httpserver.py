@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 __author__ = 'i@tinyms.com'
 
 import os
@@ -13,6 +15,7 @@ from .plugin import list_plugin_modules, import_plugin_modules, preprocess_func_
 from tinyms.core.plugin import ObjectPool
 from tinyms.core.util import Utils
 import tinyms.framework.c_api as c_api_module
+import tinyms.framework.c_route as c_route_module
 
 
 class HelloHandler(tornado.web.RequestHandler):
@@ -38,13 +41,18 @@ class HttpServer():
         modules = list_plugin_modules(plugin_dir)
         alive_module = import_plugin_modules(modules)
         preprocess_func_wrapper(alive_module)
-        platform_modules = [c_api_module]
+        platform_modules = [c_api_module, c_route_module]
         preprocess_func_wrapper(platform_modules)
 
         handlers_ = [(r"/hello", HelloHandler)]
         for k in ObjectPool.api.keys():
+            print(ObjectPool.api[k])
             handlers_.append(ObjectPool.api[k])
-        print(handlers_)
+
+        for k in ObjectPool.route.keys():
+            print(ObjectPool.route[k])
+            handlers_.append(ObjectPool.route[k])
+
         app = tornado.web.Application(
             debug=True,
             handlers=handlers_,
