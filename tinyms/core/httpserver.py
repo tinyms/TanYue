@@ -14,6 +14,7 @@ from .plugin import list_plugin_modules, import_plugin_modules, preprocess_func_
 
 from tinyms.core.plugin import ObjectPool
 from tinyms.core.util import Utils
+from tinyms.core.config import Config
 import tinyms.framework.c_api as c_api_module
 import tinyms.framework.c_route as c_route_module
 
@@ -33,6 +34,9 @@ class HttpServer():
     @staticmethod
     def startup():
         workdir = os.getcwd()
+        Config.abs_path = workdir
+        Config.load()
+
         temp_dir = os.path.join(workdir, "temp")
         Utils.rmdirs(temp_dir)
         Utils.mkdirs(temp_dir)
