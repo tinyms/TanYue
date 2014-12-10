@@ -1,13 +1,13 @@
 __author__ = 'i@tinyms.com'
 
-from tinyms.cache.cache import SimpleCache, FileSystemCache
+from tinyms.core.cache import CacheFactory
 
-c = SimpleCache()
+CacheFactory.STORAGE_PATH = "d:/temp/flask/demo2"
+c = CacheFactory.simple()
 c.set('cc', 'ddddddddddd')
-print(c)
 print(c.get('cc'))
 
-f = FileSystemCache("d:/temp/flask")
-f.set("user", {"Name": "Jhone"})
-print(f.get("user"))
+f = CacheFactory.file()
+# f.set("user3", {"Name": "Jhone"})
+print(f.get("user3"))
 

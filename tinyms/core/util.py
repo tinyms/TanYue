@@ -15,7 +15,6 @@ import shutil
 from datetime import timedelta
 
 import xlrd
-from PIL import Image
 from tornado.template import Template
 from dateutil.relativedelta import relativedelta
 
@@ -85,6 +84,7 @@ class Utils():
 
     @staticmethod
     def create_thumbnail(imgfile_path, saved_path, size="200x200"):
+        from PIL import Image
         nums = Utils.parse_int_array(size)
         img = Image.open(imgfile_path)
         img.thumbnail((nums[0], nums[1]), Image.ANTIALIAS)

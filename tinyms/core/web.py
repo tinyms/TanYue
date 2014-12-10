@@ -138,7 +138,7 @@ class IWebHandler(RequestHandler):
         return os.path.dirname(self.get_template_path()) + "/"
 
 
-def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cache_time=0, cache_forever=False):
+def api(pattern="/", method="get", auth=False, points=set(), cache_key="", cache_time=300, cache_storage="mem"):
     def handle_func(func):
         @wraps(func)
         def wrap_func(*args_, **kwargs_):
@@ -146,9 +146,9 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cach
             pattern_ = "/api%s" % pattern
             cls_name = "tinyms_web_api_%s" % Utils.md5(pattern_)
             handler = type(cls_name, (IWebHandler,), {})
-            handler.cache_path = cache_path
+            handler.cache_path = cache_key
             handler.cache_time = cache_time
-            handler.cache_forever = cache_forever
+            handler.cache_storage = cache_storage
 
             def unauth(*args, **kwargs):
                 this = args[0]
@@ -160,7 +160,7 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cach
 
             def generic_func(*args, **kwargs):
                 this = args[0]
-                # this.set_header("Content-Type", "application/json; charset=UTF-8")
+                this.set_header("Content-Type", "application/json; charset=UTF-8")
                 if auth:
                     account_id = this.get_current_user()
                     if not account_id:
@@ -193,16 +193,16 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_path="", cach
     return handle_func
 
 
-def route(pattern="/", method="get", auth=False, points=set(), cache_path="", cache_time=0, cache_forever=False):
+def route(pattern="/", method="get", auth=False, points=set(), cache_key="", cache_time=300, cache_storage="mem"):
     def handle_func(func):
         @wraps(func)
         def wrap_func(*args_, **kwargs_):
             func.__controller__ = True
             cls_name = "tinyms_web_controller_%s" % Utils.md5(pattern)
             handler = type(cls_name, (IWebHandler,), {})
-            handler.cache_path = cache_path
+            handler.cache_path = cache_key
             handler.cache_time = cache_time
-            handler.cache_forever = cache_forever
+            handler.cache_storage = cache_storage
 
             def unauth(*args, **kwargs):
                 this = args[0]
