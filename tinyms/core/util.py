@@ -21,7 +21,7 @@ from dateutil.relativedelta import relativedelta
 
 class DataResult(object):
     message = ""
-    success = False
+    success = True
     data = object()
 
     def dict(self):

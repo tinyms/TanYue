@@ -35,7 +35,7 @@ class HttpServer():
     def startup():
         workdir = os.getcwd()
         Config.abs_path = workdir
-        Config.load()
+        # Config.load()
 
         temp_dir = os.path.join(workdir, "temp")
         Utils.rmdirs(temp_dir)

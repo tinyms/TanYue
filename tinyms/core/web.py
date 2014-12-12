@@ -8,6 +8,7 @@ from functools import wraps
 from tornado.web import RequestHandler
 from .plugin import ObjectPool, EmptyClass, do_action
 from tinyms.core.util import Utils, DataResult
+from tinyms.core.cache import CacheFactory
 
 
 class IWebHandler(RequestHandler):
@@ -146,7 +147,7 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_key="", cache
             pattern_ = "/api%s" % pattern
             cls_name = "tinyms_web_api_%s" % Utils.md5(pattern_)
             handler = type(cls_name, (IWebHandler,), {})
-            handler.cache_path = cache_key
+            handler.cache_key = cache_key
             handler.cache_time = cache_time
             handler.cache_storage = cache_storage
 
@@ -169,16 +170,43 @@ def api(pattern="/", method="get", auth=False, points=set(), cache_key="", cache
                         points_ = this.get_current_account_points()
                         same = points & points_
                         if len(same) > 0:
-                            result = func(*args, **kwargs)
-                            this.write(Utils.encode(result.dict()))
+                            if this.cache_key:
+                                c = CacheFactory.cache(this.cache_storage)
+                                v = c.get(this.cache_key)
+                                if not v:
+                                    result = func(*args, **kwargs)
+                                    v = Utils.encode(result.dict())
+                                    c.set(this.cache_key, v, this.cache_time)
+                            else:
+                                result = func(*args, **kwargs)
+                                v = Utils.encode(result.dict())
+                            this.write(v)
                         else:
                             unauth(*args, **kwargs)
                     else:
-                        result = func(*args, **kwargs)
-                        this.write(Utils.encode(result.dict()))
+                        if this.cache_key:
+                            c = CacheFactory.cache(this.cache_storage)
+                            v = c.get(this.cache_key)
+                            if not v:
+                                result = func(*args, **kwargs)
+                                v = Utils.encode(result.dict())
+                                c.set(this.cache_key, v, this.cache_time)
+                        else:
+                            result = func(*args, **kwargs)
+                            v = Utils.encode(result.dict())
+                        this.write(v)
                 else:
-                    result = func(*args, **kwargs)
-                    this.write(result.dict())
+                    if this.cache_key:
+                        c = CacheFactory.cache(this.cache_storage)
+                        v = c.get(this.cache_key)
+                        if not v:
+                            result = func(*args, **kwargs)
+                            v = Utils.encode(result.dict())
+                            c.set(this.cache_key, v, this.cache_time)
+                    else:
+                        result = func(*args, **kwargs)
+                        v = Utils.encode(result.dict())
+                    this.write(v)
 
             if "post" == method:
                 handler.post = generic_func

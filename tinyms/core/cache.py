@@ -429,3 +429,9 @@ class CacheFactory():
                                                       threshold=CacheFactory.FILE_THRESHOLD,
                                                       default_timeout=CacheFactory.DEFAULT_TIMEOUT)
         return CacheFactory.__C_FILE__
+
+    @staticmethod
+    def cache(cache_storage="mem"):
+        if "mem" == cache_storage:
+            return CacheFactory.simple()
+        return CacheFactory.file()
