@@ -34,8 +34,11 @@ class HttpServer():
     @staticmethod
     def startup():
         workdir = os.getcwd()
-        Config.abs_path = workdir
-        # Config.load()
+        Config.APS_PATH = workdir
+        Config.STATIC_PATH = "%s/static" % Config.APS_PATH
+        Config.TEMPLATE_PATH = "%s/template" % Config.APS_PATH
+        Config.PLUGIN_PATH = "%s/plugin" % Config.APS_PATH
+        Config.load()
 
         temp_dir = os.path.join(workdir, "temp")
         Utils.rmdirs(temp_dir)

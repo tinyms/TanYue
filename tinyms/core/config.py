@@ -7,20 +7,18 @@ from tinyms.core.util import Utils
 
 
 class Config():
+    __CONFIG_FILE_NAME__ = "config.json"
 
-    abs_path = "home"
-    site_url = "http://localhost"
-    temp_path = "temp"
-    static_path = "static"
-    plugin_path = "plugins"
-    template_path = "template"
+    APS_PATH = "/home"
+    STATIC_PATH = "/home/static"
+    PLUGIN_PATH = "/home/plugin"
+    TEMPLATE_PATH = "/home/template"
 
-    app_config = {
+    # key value.
+    items = {
         "site_url": "http://localhost",
-        "db_type": "",
-        "db_user": "",
-        "db_pwd": "",
-        "db_name": ""
+        "temp_path": "/home/temp",
+        "database_type": "sqlite"
     }
 
     def __init__(self):
@@ -28,11 +26,22 @@ class Config():
 
     @staticmethod
     def load():
-        conf_file_name = os.path.join(Config.abs_path, "landmoon.conf")
-        Config.app_config = json.loads(Utils.text_read(conf_file_name))
+        conf_file_name = os.path.join(Config.APS_PATH, Config.__CONFIG_FILE_NAME__)
+        if os.path.exists(conf_file_name):
+            Config.items = json.loads(Utils.text_read(conf_file_name))
+        else:
+            Config.save()
 
     @staticmethod
     def save():
-        conf_file_name = os.path.join(Config.abs_path, "landmoon.conf")
-        conf = json.dumps(Config.app_config)
+        conf_file_name = os.path.join(Config.APS_PATH, Config.__CONFIG_FILE_NAME__)
+        conf = json.dumps(Config.items, indent=True)
         Utils.text_write(conf_file_name, conf)
+
+    @staticmethod
+    def site_url():
+        return Config.items.get("site_url", "http://localhost")
+
+    @staticmethod
+    def temp_path():
+        return Config.items.get("temp_path", "/home/temp")
