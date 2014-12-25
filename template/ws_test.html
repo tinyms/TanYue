@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>WS</title>
+    <script type="text/javascript" src="/static/res/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript">
+        var ws;
+        $(document).ready(function(){
+            ws = new WebSocket("ws://localhost/ws");
+            ws.onopen=function(){
+                console.log('is open');
+                ws.send("aaaaaa");
+            };
+            ws.onmessage = function(evt){
+                console.log(evt);
+            };
+        });
+    </script>
+</head>
+
+<body>
+<button onclick="ws.send('dddddd');">Send</button>
+</body>
+</html>

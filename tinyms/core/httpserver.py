@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from tinyms.core.web import WebSocketController
 
 __author__ = 'i@tinyms.com'
 
@@ -9,7 +10,6 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 import tornado.wsgi
-import wsgiref.simple_server
 from .plugin import list_plugin_modules, import_plugin_modules, preprocess_func_wrapper
 
 from tinyms.core.plugin import ObjectPool
@@ -51,7 +51,7 @@ class HttpServer():
         platform_modules = [c_api_module, c_route_module]
         preprocess_func_wrapper(platform_modules)
 
-        handlers_ = [(r"/hello", HelloHandler)]
+        handlers_ = [(r"/ws", WebSocketController)]
         for k in ObjectPool.api.keys():
             print(ObjectPool.api[k])
             handlers_.append(ObjectPool.api[k])
@@ -67,6 +67,6 @@ class HttpServer():
             template_path=os.path.join(workdir, "template"),
             cookie_secret="www.tinyms.com"
         )
-        wsgi_app = tornado.wsgi.WSGIAdapter(app)
-        server = wsgiref.simple_server.make_server('', 80, wsgi_app)
-        server.serve_forever()
+        http_server = tornado.httpserver.HTTPServer(app)
+        http_server.listen(80)
+        tornado.ioloop.IOLoop.instance().start()

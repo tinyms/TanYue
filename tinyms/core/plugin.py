@@ -24,9 +24,9 @@ class ObjectPool():
     roles = dict()
 
 
-# 插件实现函数
 def add_action(hook_name, func_obj):
     """
+    插件实现函数
     自定义插件，扩展插件点，定制功能
     :param hook_name: 插件点名称，名称具备唯一性
     :param func_obj: 插接进来的函数对象
@@ -104,11 +104,10 @@ def preprocess_func_wrapper(modules):
             if attr_name.startswith("__"):
                 continue
             live_attr = getattr(m, attr_name)
-
             if isinstance(live_attr, types.FunctionType):
-                code = live_attr.func_code
+                code = live_attr.__code__
                 if code.co_name == "wrapper" or code.co_name == "wrap_func":
                     arr = code.co_names
                     if arr.count('__controller__') == 0:
                         continue
-                    apply(live_attr)
+                    live_attr()

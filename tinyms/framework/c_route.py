@@ -7,4 +7,4 @@ from tinyms.core.web import route
 
 @route("/")
 def index_page(handler):
-    handler.render("demo.html", data={"Name": "JK"})
+    handler.render("ws_test.html", data={"Name": "JK"})

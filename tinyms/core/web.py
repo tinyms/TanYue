@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from tinyms.core.pool import WebSocketPoolFactory
 
 __author__ = 'i@tinyms.com'
 
@@ -6,6 +7,7 @@ import os
 import shutil
 from functools import wraps
 from tornado.web import RequestHandler
+from tornado.websocket import WebSocketHandler
 from .plugin import ObjectPool, EmptyClass, do_action
 from tinyms.core.util import Utils, DataResult
 from tinyms.core.cache import CacheFactory
@@ -265,6 +267,21 @@ def route(pattern="/", method="get", auth=False, points=set(), cache_key="", cac
         return wrap_func
 
     return handle_func
+
+
+class WebSocketController(WebSocketHandler):
+
+    def data_received(self, chunk):
+        pass
+
+    def open(self):
+        WebSocketPoolFactory.__sockets__.append(self)
+
+    def on_message(self, message):
+        WebSocketPoolFactory.execute(message)
+
+    def on_close(self):
+        WebSocketPoolFactory.__sockets__.remove(self)
 
 
 def upload(handler, thumbnail_size="", store_level="Private", callback_func=None):

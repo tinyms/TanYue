@@ -65,7 +65,7 @@ import errno
 import tempfile
 from hashlib import md5
 from time import time
-import cPickle as pickle_
+import pickle as pickle_
 
 iteritems = lambda d, *args, **kwargs: d.iteritems(*args, **kwargs)
 
@@ -74,10 +74,10 @@ def _items(mappingorseq):
     """Wrapper for efficient iteration over mappings represented by dicts
     or sequences::
 
-        >>> for k, v in _items((i, i*i) for i in xrange(5)):
+        >>> for k, v in _items((i, i*i) for i in range(5)):
         ...    assert k*k == v
 
-        >>> for k, v in _items(dict((i, i*i) for i in xrange(5))):
+        >>> for k, v in _items(dict((i, i*i) for i in range(5))):
         ...    assert k*k == v
 
     """
@@ -353,7 +353,7 @@ class FileSystemCache(BaseCache):
         return True
 
     def _get_filename(self, key):
-        if isinstance(key, unicode):
+        if isinstance(key, str):
             # XXX unicode review
             key = key.encode('utf-8')
         hash_ = md5(key).hexdigest()
